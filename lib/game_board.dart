@@ -18,14 +18,193 @@ class _GameBoardStateState extends State<GameBoard> {
   int selectedRow = -1;
   int selectedCol = -1;
 
+  List<List<int>> validMoves = [];
+
   void pieceSelected(int row, int col) {
     setState(() {
       if (board[row][col] != null) {
         selectedPiece = board[row][col];
         selectedRow = row;
         selectedCol = col;
+      } else if (selectedPiece != null &&
+          validMoves.any((element) => element[0] == row && element[1] == col)) {
+        movePiece(row, col);
       }
+      validMoves =
+          calculateRawValidMoves(selectedRow, selectedCol, selectedPiece);
     });
+  }
+
+  List<List<int>> calculateRawValidMoves(int row, int col, ChessPiece? piece) {
+    List<List<int>> candidateMoves = [];
+    int direction = piece!.isWhite ? -1 : 1;
+
+    switch (piece.type) {
+      case ChessPieceType.pawn:
+        if (isInBoard(row + direction, col) &&
+            board[row + direction][col] == null) {
+          candidateMoves.add([row + direction, col]);
+        }
+        if ((row == 1 && !piece.isWhite) || (row == 6 && piece.isWhite)) {
+          if (isInBoard(row + 2 * direction, col) &&
+              board[row + 2 * direction][col] == null &&
+              board[row + direction][col] == null) {
+            candidateMoves.add([row + 2 * direction, col]);
+          }
+        }
+
+        if (isInBoard(row + direction, col - 1) &&
+            board[row + direction][col - 1] != null &&
+            board[row + direction][col - 1]!.isWhite) {
+          candidateMoves.add([row + direction, col - 1]);
+        }
+        if (isInBoard(row + direction, col + 1) &&
+            board[row + direction][col + 1] != null &&
+            board[row + direction][col + 1]!.isWhite) {
+          candidateMoves.add([row + direction, col + 1]);
+        }
+        break;
+      case ChessPieceType.rook:
+        var directions = [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+        ];
+        for (var direction in directions) {
+          var i = 1;
+          while (true) {
+            var newRow = row + i * direction[0];
+            var newCol = col + i * direction[1];
+            if (!isInBoard(newRow, newCol)) {
+              break;
+            }
+            if (board[newRow][newCol] != null) {
+              if (board[newRow][newCol]!.isWhite != piece.isWhite) {
+                candidateMoves.add([newRow, newCol]);
+              }
+              break;
+            }
+            candidateMoves.add([newRow, newCol]);
+            i++;
+          }
+        }
+        break;
+      case ChessPieceType.knight:
+        var knightMoves = [
+          [-2, -1],
+          [-2, 1],
+          [-1, -2],
+          [-1, 2],
+          [1, -2],
+          [1, -2],
+          [1, 2],
+          [2, -1],
+          [2, 1],
+        ];
+        for (var move in knightMoves) {
+          var newRow = row + move[0];
+          var newCol = col + move[1];
+          if (!isInBoard(newRow, newCol)) {
+            continue;
+          }
+          if (board[newRow][newCol] != null) {
+            if (board[newRow][newCol]!.isWhite != piece.isWhite) {
+              candidateMoves.add([newRow, newCol]);
+            }
+            continue;
+          }
+          candidateMoves.add([newRow, newCol]);
+        }
+        break;
+      case ChessPieceType.bishop:
+        var directions = [
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1]
+        ];
+        for (var direction in directions) {
+          var i = 1;
+          while (true) {
+            var newRow = row + i * direction[0];
+            var newcol = col + i * direction[0];
+            if (!isInBoard(newRow, newcol)) {
+              break;
+            }
+            if (board[newRow][newcol] != null) {
+              if (board[newRow][newcol]!.isWhite != piece.isWhite) {
+                candidateMoves.add([newRow, newcol]);
+              }
+              break;
+            }
+            candidateMoves.add([newRow, newcol]);
+            i++;
+          }
+        }
+
+        break;
+      case ChessPieceType.queen:
+        var directions = [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1]
+        ];
+        for (var direction in directions) {
+          var i = 1;
+          while (true) {
+            var newRow = row + i * direction[0];
+            var newCol = col = i * direction[1];
+            if (!isInBoard(newRow, newCol)) {
+              break;
+            }
+            if (board[newRow][newCol] != null) {
+              if (board[newRow][newCol]!.isWhite != piece.isWhite) {
+                candidateMoves.add([newRow, newCol]);
+              }
+              break;
+            }
+            candidateMoves.add([newRow, newCol]);
+            i++;
+          }
+        }
+        break;
+      case ChessPieceType.king:
+        var directions = [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1]
+        ];
+
+        for (var direction in directions) {
+          var newRow = row + direction[0];
+          var newCol = col + direction[1];
+          if (!isInBoard(newRow, newCol)) {
+            continue;
+          }
+          if (board[newRow][newCol] != null) {
+            if (board[newRow][newCol]!.isWhite != piece.isWhite) {
+              candidateMoves.add([newRow, newCol]);
+            }
+            continue;
+          }
+          candidateMoves.add([newRow, newCol]);
+        }
+
+        break;
+      default:
+    }
+    return candidateMoves;
   }
 
   @override
@@ -115,6 +294,17 @@ class _GameBoardStateState extends State<GameBoard> {
     board = newBoard;
   }
 
+  void movePiece(int newRow, int newCol) {
+    board[newRow][newCol] = selectedPiece;
+    board[selectedRow][selectedCol] = null;
+    setState(() {
+      selectedPiece = null;
+      selectedRow = -1;
+      selectedCol = -1;
+      validMoves = [];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,11 +318,20 @@ class _GameBoardStateState extends State<GameBoard> {
             int col = index % 8;
 
             bool isSelected = selectedRow == row && selectedCol == col;
+            bool isValidMove = false;
+
+            for (var position in validMoves) {
+              if (position[0] == row && position[1] == col) {
+                isValidMove = true;
+              }
+            }
 
             return Square(
               isWhite: isWhite(index),
               piece: board[row][col],
-              isSelected: isSelected,onTap: ()=>pieceSelected(row,col),
+              isSelected: isSelected,
+              isValidMove: isValidMove,
+              onTap: () => pieceSelected(row, col),
             );
           }),
     );
