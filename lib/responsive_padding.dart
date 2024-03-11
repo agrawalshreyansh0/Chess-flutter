@@ -9,12 +9,15 @@ class ResponsivePadding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: MediaQuery.of(context).size.width > 650
-          ? EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width / 3)
-          : const EdgeInsets.all(0),
-      child: child,
+    return Container(
+      color: Colors.grey,
+      child: Padding(
+        padding: MediaQuery.of(context).size.width > 650
+            ? EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width / 3)
+            : const EdgeInsets.all(0),
+        child: child,
+      ),
     );
   }
 }
